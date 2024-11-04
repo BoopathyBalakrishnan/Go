@@ -11,18 +11,53 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func New() http.Handler {
-	router := mux.NewRouter()
+//var validate *validator.Validate
 
-	router.HandleFunc("/bms", GetAllInfo).Methods("GET")
-	router.HandleFunc("/quest/{id}", GetAccount).Methods("GET")
-	router.HandleFunc("/quest", CreateAccount).Methods("POST")
-	router.HandleFunc("/quest/{id}", UpdateAccount).Methods("PUT")
-	//router.HandleFunc("/quest/{id}", DeleteQuest).Methods("DELETE") 
 
-	return router
+func GetAllInfo(w http.ResponseWriter, r *http.Request)  {
+	w.Header().Set("Content-Type", "application/json")
+
+  var info []models.Bmstbl
+  //models.DB.Find(&info)
+  models.DB.Find(&info)
+
+  json.NewEncoder(w).Encode(info)
 }
 
+func CreateAccount(w http.ResponseWriter, r *http.Request){
+	var input models.Bmstbl 
+  
+	body, _ := ioutil.ReadAll(r.Body)
+	_ = json.Unmarshal(body, &input)
+  
+	validate = validator.New()
+	err := validate.Struct(input)
+  
+	if err != nil {
+	  utils.RespondWithError(w, http.StatusBadRequest, "Validation Error")
+	  return 
+	}
+  
+	quest, err := models.Bmstbl.CustId
+	w.Header().Set("Content-Type", "application/json")
+  
+	json.NewEncoder(w).Encode(quest) 
+  
+  }
+
+  func GetAccount(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+  
+	id := mux.Vars(r)["custId"]
+	var quest models.Bmstbl
+  
+	if err := models.DB.Where("id = ?", id).First(&quest).Error; err != nil{
+	  utils.RespondWithError(w, http.StatusNotFound, "Quest not found")
+	  return
+	}
+  
+	json.NewEncoder(w).Encode(quest)
+  }
 func UpdateQuest(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
   
@@ -52,5 +87,6 @@ func UpdateQuest(w http.ResponseWriter, r *http.Request){
   
 	models.DB.Save(&bms)
   
-	json.NewEncoder(w).Encode(bms)
+	json.NewEncoder(w).Encode(quest)
   }
+
